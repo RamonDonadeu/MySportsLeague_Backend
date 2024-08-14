@@ -1,0 +1,219 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model sport {
+  sport_id          Int      @id @default(autoincrement())
+  name              String
+  minimum_team_size Int      @default(1)
+  maximum_team_size Int?
+  teams             team[]
+  league            league[]
+}
+
+model participant {
+  participant_id            String           @id @default(uuid())
+  user                      user             @relation(fields: [user_id], references: [user_id])
+  user_id                   String           @unique
+  team                      team?
+  league_members            league_members[]
+  participant_type          participant_type
+  league_match_participant1 match[]          @relation("participant1")
+  league_match_participant2 match[]          @relation("participant2")
+  match                     match[]          @relation("winner")
+}
+
+enum participant_type {
+  USER
+  TEAM
+}
+
+model organization {
+  organization_id String   @id
+  leagues_owned   league[]
+  user            user     @relation(fields: [user_id], references: [user_id])
+  user_id         String   @unique
+  name            String
+}
+
+model refresh_token {
+  id           String   @id @unique @default(uuid())
+  hashed_token String
+  user_id      String
+  User         user     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  revoked      Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+}
+
+model user {
+  user_id         String            @id @default(uuid())
+  participant     participant?
+  participant_id  String?           @unique
+  organization    organization?
+  email           String            @unique
+  name            String?
+  password        String
+  refreshTokens   refresh_token[]
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  teams           team_members[]
+  role            user_role
+  friends         friends[]
+  friend_requests friend_requests[]
+  league_invites  league_invites[]
+  league_request  league_request[]
+  team_invites    team_invites[]
+}
+
+enum user_role {
+  ORGANIZATION
+  PLAYER
+}
+
+model team {
+  team         participant    @relation(fields: [team_id], references: [participant_id])
+  team_id      String         @unique
+  team_name    String
+  sport        sport          @relation(fields: [sport_id], references: [sport_id])
+  sport_id     Int
+  users        team_members[]
+  team_invites team_invites[]
+}
+
+model team_members {
+  user          user    @relation(fields: [user_id], references: [user_id])
+  user_id       String
+  team          team    @relation(fields: [team_id], references: [team_id])
+  team_id       String
+  is_team_owner Boolean
+
+  @@id([user_id, team_id])
+}
+
+model league {
+  league_id             String           @id @default(uuid())
+  name                  String
+  is_team_based         Boolean
+  members               league_members[]
+  matches               match[]
+  sport                 sport            @relation(fields: [sport_id], references: [sport_id])
+  sport_id              Int
+  status                league_status
+  organization          organization?    @relation(fields: [organization_id], references: [organization_id])
+  organization_id       String?
+  minimum_participants  Int
+  maximum_participants  Int?
+  allow_changes_in_team Boolean
+  type                  league_type
+  start_date            DateTime?
+  end_date              DateTime?
+  match_can_end_in_draw Boolean
+  points_for_win        Int?
+  points_for_draw       Int?
+  points_for_loss       Int?
+  private               Boolean
+  password              String?
+  league_invites        league_invites[]
+  league_request        league_request[]
+}
+
+enum league_type {
+  ELO
+  POINTS
+  SWISS
+  ROUND_ROBIN
+  SINGLE_KNOCKOUT
+  DOUBLE_KNOCKOUT
+  LOSER_BRACKET
+}
+
+enum league_status {
+  ACTIVE
+  FINISHED
+}
+
+model league_members {
+  participant     participant @relation(fields: [participant_id], references: [participant_id])
+  participant_id  String
+  league          league      @relation(fields: [league_id], references: [league_id])
+  league_id       String
+  can_invite      Boolean
+  can_compete     Boolean
+  is_league_owner Boolean
+
+  @@id([participant_id, league_id])
+}
+
+model match {
+  league_id       String
+  league          league       @relation(fields: [league_id], references: [league_id])
+  match_id        String       @id @default(uuid())
+  date            DateTime
+  winner          participant? @relation("winner", fields: [winner_id], references: [participant_id])
+  winner_id       String?
+  draw            Boolean?
+  status          match_status
+  participant1    participant  @relation("participant1", fields: [participant1_id], references: [participant_id])
+  participant1_id String
+  participant2    participant  @relation("participant2", fields: [participant2_id], references: [participant_id])
+  participant2_id String
+  created_at      DateTime     @default(now())
+}
+
+enum match_status {
+  PENDING
+  FINISHED
+  CANCELLED
+}
+
+model friends {
+  user_id   String
+  friend    user   @relation(fields: [friend_id], references: [user_id])
+  friend_id String
+
+  @@id([user_id, friend_id])
+}
+
+model friend_requests {
+  user_id   String
+  friend    user   @relation(fields: [friend_id], references: [user_id])
+  friend_id String
+
+  @@id([user_id, friend_id])
+}
+
+model league_invites {
+  league_id String
+  league    league @relation(fields: [league_id], references: [league_id])
+  user_id   String
+  user      user   @relation(fields: [user_id], references: [user_id])
+
+  @@id([league_id, user_id])
+}
+
+model league_request {
+  league_id String
+  league    league @relation(fields: [league_id], references: [league_id])
+  user_id   String
+  user      user   @relation(fields: [user_id], references: [user_id])
+
+  @@id([league_id, user_id])
+}
+
+model team_invites {
+  team_id String
+  team    team   @relation(fields: [team_id], references: [team_id])
+  user_id String
+  user    user   @relation(fields: [user_id], references: [user_id])
+
+  @@id([team_id, user_id])
+}

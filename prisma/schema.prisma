@@ -2,46 +2,13 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-model sport {
-  sport_id          Int      @id @default(autoincrement())
-  name              String
-  minimum_team_size Int      @default(1)
-  maximum_team_size Int?
-  teams             team[]
-  league            league[]
-}
-
-model participant {
-  participant_id            String           @id @default(uuid())
-  user                      user             @relation(fields: [user_id], references: [user_id])
-  user_id                   String           @unique
-  team                      team?
-  league_members            league_members[]
-  participant_type          participant_type
-  league_match_participant1 match[]          @relation("participant1")
-  league_match_participant2 match[]          @relation("participant2")
-  match                     match[]          @relation("winner")
-}
-
-enum participant_type {
-  USER
-  TEAM
-}
-
-model organization {
-  organization_id String   @id
-  leagues_owned   league[]
-  user            user     @relation(fields: [user_id], references: [user_id])
-  user_id         String   @unique
-  name            String
 }
 
 model refresh_token {
@@ -54,119 +21,180 @@ model refresh_token {
   updated_at   DateTime @updatedAt
 }
 
-model user {
-  user_id         String            @id @default(uuid())
-  participant     participant?
-  participant_id  String?           @unique
-  organization    organization?
-  email           String            @unique
-  name            String?
-  password        String
-  refreshTokens   refresh_token[]
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
-  teams           team_members[]
-  role            user_role
-  friends         friends[]
-  friend_requests friend_requests[]
-  league_invites  league_invites[]
-  league_request  league_request[]
-  team_invites    team_invites[]
-}
-
 enum user_role {
   ORGANIZATION
   PLAYER
 }
 
-model team {
-  team         participant    @relation(fields: [team_id], references: [participant_id])
-  team_id      String         @unique
-  team_name    String
-  sport        sport          @relation(fields: [sport_id], references: [sport_id])
-  sport_id     Int
-  users        team_members[]
-  team_invites team_invites[]
+model user {
+  user_id       String          @id @default(uuid())
+  leagues_owned league[]
+  email         String          @unique
+  name          String
+  surname       String
+  password      String
+  refreshTokens refresh_token[]
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  role          user_role
+  player        player?
+  organization  organization[]
 }
 
-model team_members {
-  user          user    @relation(fields: [user_id], references: [user_id])
-  user_id       String
-  team          team    @relation(fields: [team_id], references: [team_id])
-  team_id       String
-  is_team_owner Boolean
+model player {
+  user_id                     String                        @unique
+  user                        user                          @relation(fields: [user_id], references: [user_id])
+  teams                       team[]                        @relation("team_owner_id")
+  team_owner                  team[]
+  player_league_participation player_league_participation[]
+  individual_match_local      individual_match[]            @relation("player_local_player_id")
+  individual_match_winner     individual_match[]            @relation("player_winner_id")
+  individual_match_visitor    individual_match[]            @relation("player_visitor_player_id")
+  friendships                 friendship[]                  @relation("user_1")
+  friends_with                friendship[]                  @relation("user_2")
+  friend_request_sent         friend_request[]              @relation("requestor")
+  friend_request_received     friend_request[]              @relation("requested")
 
-  @@id([user_id, team_id])
+  @@id([user_id])
+}
+
+model organization {
+  organization_id String @id @default(uuid())
+  name            String
+  owner_id        String
+  owner           user   @relation(fields: [owner_id], references: [user_id])
+}
+
+model team {
+  team_id                String       @unique
+  team_name              String
+  players                player[]
+  team_owner             player       @relation("team_owner_id", fields: [team_owner_id], references: [user_id])
+  team_owner_id          String
+  can_compete            Boolean      @default(false)
+  points                 Int          @default(0)
+  team_match_local       team_match[] @relation("team_local_team_id")
+  team_match_visitor     team_match[] @relation("team_visitor_team_id")
+  team_match_winner      team_match[] @relation("team_winner_id")
+  partacipates_in_league team_league  @relation(fields: [league_id], references: [league_id])
+  league_id              String
+  wins                   Int          @default(0)
+  draws                  Int          @default(0)
+  losses                 Int          @default(0)
+
+  @@id([team_id])
 }
 
 model league {
-  league_id             String           @id @default(uuid())
+  league_id             String             @id @default(uuid())
   name                  String
-  is_team_based         Boolean
-  members               league_members[]
+  is_team_based         Boolean            @default(false)
   matches               match[]
-  sport                 sport            @relation(fields: [sport_id], references: [sport_id])
-  sport_id              Int
-  status                league_status
-  organization          organization?    @relation(fields: [organization_id], references: [organization_id])
-  organization_id       String?
-  minimum_participants  Int
+  status                league_status      @default(NOT_STARTED)
   maximum_participants  Int?
-  allow_changes_in_team Boolean
-  type                  league_type
+  allow_late_join       Boolean            @default(true)
+  type                  league_type?
   start_date            DateTime?
   end_date              DateTime?
-  match_can_end_in_draw Boolean
+  match_can_end_in_draw Boolean            @default(false)
   points_for_win        Int?
   points_for_draw       Int?
   points_for_loss       Int?
   private               Boolean
   password              String?
-  league_invites        league_invites[]
-  league_request        league_request[]
+  owner                 user               @relation(fields: [owner_id], references: [user_id])
+  owner_id              String
+  individual_league     individual_league?
+  team_league           team_league?
+}
+
+model team_league {
+  league_id                 String
+  league                    league  @relation(fields: [league_id], references: [league_id])
+  team                      team[]
+  minimum_team_participants Int?
+  maximum_team_participants Int?
+  allow_changes_in_team     Boolean @default(false)
+
+  @@id([league_id])
+}
+
+model individual_league {
+  league_id                            String
+  league                               league                        @relation(fields: [league_id], references: [league_id])
+  participants                         player_league_participation[]
+  player_league_participationLeague_id String
+  player_league_participationPlayer_id String
+
+  @@id([league_id])
+}
+
+model player_league_participation {
+  player_id String
+  player    player            @relation(fields: [player_id], references: [user_id])
+  points    Int               @default(0)
+  wins      Int               @default(0)
+  draws     Int               @default(0)
+  losses    Int               @default(0)
+  league    individual_league @relation(fields: [league_id], references: [league_id])
+  league_id String
+
+  @@id([league_id, player_id])
 }
 
 enum league_type {
   ELO
   POINTS
-  SWISS
-  ROUND_ROBIN
-  SINGLE_KNOCKOUT
-  DOUBLE_KNOCKOUT
-  LOSER_BRACKET
+  // SWISS
+  // ROUND_ROBIN
+  // SINGLE_KNOCKOUT
+  // DOUBLE_KNOCKOUT
+  // LOSER_BRACKET
 }
 
 enum league_status {
   ACTIVE
   FINISHED
-}
-
-model league_members {
-  participant     participant @relation(fields: [participant_id], references: [participant_id])
-  participant_id  String
-  league          league      @relation(fields: [league_id], references: [league_id])
-  league_id       String
-  can_invite      Boolean
-  can_compete     Boolean
-  is_league_owner Boolean
-
-  @@id([participant_id, league_id])
+  NOT_STARTED
 }
 
 model match {
-  league_id       String
-  league          league       @relation(fields: [league_id], references: [league_id])
-  match_id        String       @id @default(uuid())
-  date            DateTime
-  winner          participant? @relation("winner", fields: [winner_id], references: [participant_id])
+  league_id        String
+  league           league             @relation(fields: [league_id], references: [league_id])
+  match_id         String             @id @default(uuid())
+  date             DateTime
+  draw             Boolean?
+  status           match_status
+  created_at       DateTime           @default(now())
+  team_match       team_match[]
+  individual_match individual_match[]
+}
+
+model team_match {
+  match_id        String
+  match           match   @relation(fields: [match_id], references: [match_id])
+  local_team_id   String
+  local_team      team    @relation("team_local_team_id", fields: [local_team_id], references: [team_id])
+  visitor_team_id String
+  visitor_team    team    @relation("team_visitor_team_id", fields: [visitor_team_id], references: [team_id])
   winner_id       String?
-  draw            Boolean?
-  status          match_status
-  participant1    participant  @relation("participant1", fields: [participant1_id], references: [participant_id])
-  participant1_id String
-  participant2    participant  @relation("participant2", fields: [participant2_id], references: [participant_id])
-  participant2_id String
-  created_at      DateTime     @default(now())
+  winner          team?   @relation("team_winner_id", fields: [winner_id], references: [team_id])
+  team_winner_id  String?
+
+  @@id([match_id])
+}
+
+model individual_match {
+  match_id          String
+  match             match  @relation(fields: [match_id], references: [match_id])
+  winner            player @relation("player_winner_id", fields: [winner_id], references: [user_id])
+  winner_id         String
+  local_player      player @relation("player_local_player_id", fields: [local_player_id], references: [user_id])
+  local_player_id   String
+  visitor_player    player @relation("player_visitor_player_id", fields: [visitor_player_id], references: [user_id])
+  visitor_player_id String
+
+  @@id([match_id])
 }
 
 enum match_status {
@@ -175,45 +203,22 @@ enum match_status {
   CANCELLED
 }
 
-model friends {
-  user_id   String
-  friend    user   @relation(fields: [friend_id], references: [user_id])
-  friend_id String
+model friendship {
+  player_id  String
+  player     player   @relation("user_1", fields: [player_id], references: [user_id])
+  friend_id  String
+  friend     player   @relation("user_2", fields: [friend_id], references: [user_id])
+  created_at DateTime @default(now())
 
-  @@id([user_id, friend_id])
+  @@id([player_id, friend_id])
 }
 
-model friend_requests {
-  user_id   String
-  friend    user   @relation(fields: [friend_id], references: [user_id])
-  friend_id String
+model friend_request {
+  player_id  String
+  player     player   @relation("requestor", fields: [player_id], references: [user_id])
+  friend_id  String
+  friend     player   @relation("requested", fields: [friend_id], references: [user_id])
+  created_at DateTime @default(now())
 
-  @@id([user_id, friend_id])
-}
-
-model league_invites {
-  league_id String
-  league    league @relation(fields: [league_id], references: [league_id])
-  user_id   String
-  user      user   @relation(fields: [user_id], references: [user_id])
-
-  @@id([league_id, user_id])
-}
-
-model league_request {
-  league_id String
-  league    league @relation(fields: [league_id], references: [league_id])
-  user_id   String
-  user      user   @relation(fields: [user_id], references: [user_id])
-
-  @@id([league_id, user_id])
-}
-
-model team_invites {
-  team_id String
-  team    team   @relation(fields: [team_id], references: [team_id])
-  user_id String
-  user    user   @relation(fields: [user_id], references: [user_id])
-
-  @@id([team_id, user_id])
+  @@id([player_id, friend_id])
 }

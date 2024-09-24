@@ -1,19 +1,14 @@
 import jwt from 'jsonwebtoken';
 
-// Usually I keep the token between 5 minutes - 15 minutes
 function generateAccessToken(user) {
-    return jwt.sign({ userId: user.id }, process.env.JWT_ACCESS_SECRET, {
-        expiresIn: '5m',
+    return jwt.sign({ user_id: user.user_id }, process.env.JWT_ACCESS_SECRET, {
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     });
 }
 
-// I choosed 8h because i prefer to make the user login again each day.
-// But keep him logged in if he is using the app.
-// You can change this value depending on your app logic.
-// I would go for a maximum of 7 days, and make him login again after 7 days of inactivity.
 function generateRefreshToken(user, jti) {
     return jwt.sign({
-        userId: user.id,
+        user_id: user.user_id,
         jti
     }, process.env.JWT_REFRESH_SECRET, {
         expiresIn: '8h',

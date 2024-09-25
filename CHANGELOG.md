@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/RamonDonadeu/MySportsLeague_Backend/compare/v1.1.0...v1.2.0) (2024-09-25)
+
+
+### Features
+
+* Update Auth endpoints with new database ([efef131](https://github.com/RamonDonadeu/MySportsLeague_Backend/commit/efef131530672eb8ca5cb4f7bccea8dcb6a067f9))
+
 ## [1.1.0](https://github.com/RamonDonadeu/MySportsLeague_Backend/compare/v1.0.0...v1.1.0) (2024-09-25)
 
 

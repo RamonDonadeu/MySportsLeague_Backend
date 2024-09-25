@@ -1,10 +1,10 @@
 import express from 'express';
-import { login, refreshToken, registerPlayer } from './auth.controller.js';
+import { login, refreshToken, register } from './auth.controller.js';
 
 const router = express.Router();
 
-router.post('/register-player', async (req, res, next) => {
-    registerPlayer(req, res, next);
+router.post('/register', async (req, res, next) => {
+    register(req, res, next);
 });
 
 // router.post('/register-organization', async (req, res, next) => {

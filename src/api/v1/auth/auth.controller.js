@@ -4,12 +4,12 @@ import { v4 } from 'uuid';
 import { hashToken } from '../../../utils/hashToken.js';
 import { generateTokens } from '../../../utils/jwt.js';
 import logger from '../../../utils/logger.js';
-import { createPlayerUser, findUserByEmail, findUserById, getUserPassword } from '../users/users.services.js';
+import { createUser, findUserByEmail, findUserById, getUserPassword } from '../users/users.services.js';
 import { addRefreshTokenToWhitelist, deleteRefreshToken, findRefreshTokenById } from './auth.services.js';
 
 
 const uuidv4 = v4
-async function registerPlayer(req, res, next) {
+async function register(req, res, next) {
     try {
         const { email, password, name, surname } = req.body;
         if (!email || !password || !name || !surname) {
@@ -24,7 +24,7 @@ async function registerPlayer(req, res, next) {
             return
         }
 
-        const user = await createPlayerUser({ email, password, name, surname });
+        const user = await createUser({ email, password, name, surname });
         const jti = uuidv4();
         const { accessToken, refreshToken } = generateTokens(user, jti);
         await addRefreshTokenToWhitelist({ jti, refreshToken, user_id: user.user_id });
@@ -117,5 +117,5 @@ async function refreshToken(req, res, next) {
     }
 }
 
-export { login, refreshToken, registerPlayer };
+export { login, refreshToken, register };
 

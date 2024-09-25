@@ -21,14 +21,9 @@ model refresh_token {
   updated_at   DateTime @updatedAt
 }
 
-enum user_role {
-  ORGANIZATION
-  PLAYER
-}
 
 model user {
   user_id       String          @id @default(uuid())
-  leagues_owned league[]
   email         String          @unique
   name          String
   surname       String
@@ -36,58 +31,47 @@ model user {
   refreshTokens refresh_token[]
   created_at    DateTime        @default(now())
   updated_at    DateTime        @updatedAt
-  role          user_role
-  player        player?
-  organization  organization[]
+  team team[]
+  owns_team team[] @relation("team_owner_id")
+  participates_in_league league[] 
 }
 
-model player {
-  user_id                     String                        @unique
-  user                        user                          @relation(fields: [user_id], references: [user_id])
-  teams                       team[]                        @relation("team_owner_id")
-  team_owner                  team[]
-  player_league_participation player_league_participation[]
-  individual_match_local      individual_match[]            @relation("player_local_player_id")
-  individual_match_winner     individual_match[]            @relation("player_winner_id")
-  individual_match_visitor    individual_match[]            @relation("player_visitor_player_id")
-  friendships                 friendship[]                  @relation("user_1")
-  friends_with                friendship[]                  @relation("user_2")
-  friend_request_sent         friend_request[]              @relation("requestor")
-  friend_request_received     friend_request[]              @relation("requested")
+model user_in_team {
+  user_id String
+  team_id String
 
-  @@id([user_id])
+  @@id([user_id, team_id])
 }
 
-model organization {
-  organization_id String @id @default(uuid())
-  name            String
-  owner_id        String
-  owner           user   @relation(fields: [owner_id], references: [user_id])
+model participant {
+  participant_id String @id @default(uuid())
+  team team[]
+  match_as_local match[] @relation("local")
+  match_as_visitor match[] @relation("visitor")
+  match_winner match[] @relation("match_winner")
 }
 
 model team {
-  team_id                String       @unique
-  team_name              String
-  players                player[]
-  team_owner             player       @relation("team_owner_id", fields: [team_owner_id], references: [user_id])
-  team_owner_id          String
-  can_compete            Boolean      @default(false)
-  points                 Int          @default(0)
-  team_match_local       team_match[] @relation("team_local_team_id")
-  team_match_visitor     team_match[] @relation("team_visitor_team_id")
-  team_match_winner      team_match[] @relation("team_winner_id")
-  partacipates_in_league team_league  @relation(fields: [league_id], references: [league_id])
-  league_id              String
-  wins                   Int          @default(0)
-  draws                  Int          @default(0)
-  losses                 Int          @default(0)
+  team_id         String        @id@default(uuid())
+  team_name       String
+  players         user[]
+  team_owner      user          @relation("team_owner_id", fields: [team_owner_id], references: [user_id])
+  team_owner_id   String
+  participant     participant   @relation(fields: [participant_id], references: [participant_id])
+  participant_id  String
 
-  @@id([team_id])
+}
+
+model user_in_league{
+  user_id String
+  league_id String
+  
+  @@id([user_id, league_id])
 }
 
 model league {
-  league_id             String             @id @default(uuid())
-  name                  String
+  league_id String @id @default(uuid())
+  name       String
   is_team_based         Boolean            @default(false)
   matches               match[]
   status                league_status      @default(NOT_STARTED)
@@ -97,49 +81,8 @@ model league {
   start_date            DateTime?
   end_date              DateTime?
   match_can_end_in_draw Boolean            @default(false)
-  points_for_win        Int?
-  points_for_draw       Int?
-  points_for_loss       Int?
-  private               Boolean
-  password              String?
-  owner                 user               @relation(fields: [owner_id], references: [user_id])
-  owner_id              String
-  individual_league     individual_league?
-  team_league           team_league?
-}
 
-model team_league {
-  league_id                 String
-  league                    league  @relation(fields: [league_id], references: [league_id])
-  team                      team[]
-  minimum_team_participants Int?
-  maximum_team_participants Int?
-  allow_changes_in_team     Boolean @default(false)
-
-  @@id([league_id])
-}
-
-model individual_league {
-  league_id                            String
-  league                               league                        @relation(fields: [league_id], references: [league_id])
-  participants                         player_league_participation[]
-  player_league_participationLeague_id String
-  player_league_participationPlayer_id String
-
-  @@id([league_id])
-}
-
-model player_league_participation {
-  player_id String
-  player    player            @relation(fields: [player_id], references: [user_id])
-  points    Int               @default(0)
-  wins      Int               @default(0)
-  draws     Int               @default(0)
-  losses    Int               @default(0)
-  league    individual_league @relation(fields: [league_id], references: [league_id])
-  league_id String
-
-  @@id([league_id, player_id])
+  user user[]
 }
 
 enum league_type {
@@ -159,66 +102,23 @@ enum league_status {
 }
 
 model match {
-  league_id        String
-  league           league             @relation(fields: [league_id], references: [league_id])
-  match_id         String             @id @default(uuid())
-  date             DateTime
-  draw             Boolean?
-  status           match_status
-  created_at       DateTime           @default(now())
-  team_match       team_match[]
-  individual_match individual_match[]
+  match_id String @id @default(uuid())
+  league league[]
+  match_status match_status
+  visitor participant @relation("visitor", fields: [visitor_participant_id], references: [participant_id])
+  visitor_participant_id String
+  local participant @relation("local", fields: [local_participant_id], references: [participant_id])
+  local_participant_id String
+  created_at DateTime @default(now())
+  match_winner participant? @relation("match_winner", fields: [winner_id], references: [participant_id])
+  winner_id String?
+  draw Boolean?
+
 }
 
-model team_match {
-  match_id        String
-  match           match   @relation(fields: [match_id], references: [match_id])
-  local_team_id   String
-  local_team      team    @relation("team_local_team_id", fields: [local_team_id], references: [team_id])
-  visitor_team_id String
-  visitor_team    team    @relation("team_visitor_team_id", fields: [visitor_team_id], references: [team_id])
-  winner_id       String?
-  winner          team?   @relation("team_winner_id", fields: [winner_id], references: [team_id])
-  team_winner_id  String?
-
-  @@id([match_id])
-}
-
-model individual_match {
-  match_id          String
-  match             match  @relation(fields: [match_id], references: [match_id])
-  winner            player @relation("player_winner_id", fields: [winner_id], references: [user_id])
-  winner_id         String
-  local_player      player @relation("player_local_player_id", fields: [local_player_id], references: [user_id])
-  local_player_id   String
-  visitor_player    player @relation("player_visitor_player_id", fields: [visitor_player_id], references: [user_id])
-  visitor_player_id String
-
-  @@id([match_id])
-}
 
 enum match_status {
   PENDING
   FINISHED
   CANCELLED
-}
-
-model friendship {
-  player_id  String
-  player     player   @relation("user_1", fields: [player_id], references: [user_id])
-  friend_id  String
-  friend     player   @relation("user_2", fields: [friend_id], references: [user_id])
-  created_at DateTime @default(now())
-
-  @@id([player_id, friend_id])
-}
-
-model friend_request {
-  player_id  String
-  player     player   @relation("requestor", fields: [player_id], references: [user_id])
-  friend_id  String
-  friend     player   @relation("requested", fields: [friend_id], references: [user_id])
-  created_at DateTime @default(now())
-
-  @@id([player_id, friend_id])
 }

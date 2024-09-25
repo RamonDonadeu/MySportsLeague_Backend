@@ -1,0 +1,15 @@
+{
+    "nuxt.isNuxtApp": false,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "0.0.0.0",
+            "port": 5434,
+            "driver": "PostgreSQL",
+            "name": "MyLeague-Local",
+            "database": "database",
+            "username": "user",
+            "password": "password"
+        }
+    ]
+}

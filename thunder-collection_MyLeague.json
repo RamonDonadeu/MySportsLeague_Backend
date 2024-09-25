@@ -1,0 +1,81 @@
+{
+    "clientName": "Thunder Client",
+    "collectionName": "MyLeague",
+    "collectionId": "bd228706-2ecd-490a-a836-fa9da7a4bf34",
+    "dateExported": "2024-09-25T20:38:39.376Z",
+    "version": "1.2",
+    "folders": [
+        {
+            "_id": "d48a3134-d131-4127-81ac-e4a5ed2ec572",
+            "name": "Auth",
+            "containerId": "",
+            "created": "2024-09-25T19:53:12.491Z",
+            "sortNum": 10000
+        },
+        {
+            "_id": "2f1f04fd-d7d9-4992-b689-aca3e44c69ca",
+            "name": "User",
+            "containerId": "",
+            "created": "2024-09-25T20:10:54.122Z",
+            "sortNum": 20000
+        }
+    ],
+    "requests": [
+        {
+            "_id": "3f1794ec-3794-4946-90dd-b03f8d50d788",
+            "colId": "bd228706-2ecd-490a-a836-fa9da7a4bf34",
+            "containerId": "d48a3134-d131-4127-81ac-e4a5ed2ec572",
+            "name": "https://localhost/api/v1/login",
+            "url": "v1/auth/login",
+            "method": "POST",
+            "sortNum": 10000,
+            "created": "2024-09-25T19:53:03.196Z",
+            "modified": "2024-09-25T19:59:53.305Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"email\": \"ramon@mail.com\",\n  \"password\": \"1234\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "c2f45590-5fb0-49b2-9d7c-debc5f787f2f",
+            "colId": "bd228706-2ecd-490a-a836-fa9da7a4bf34",
+            "containerId": "d48a3134-d131-4127-81ac-e4a5ed2ec572",
+            "name": "register",
+            "url": "v1/auth/register",
+            "method": "POST",
+            "sortNum": 20000,
+            "created": "2024-09-25T19:54:11.865Z",
+            "modified": "2024-09-25T19:56:15.904Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n \"name\": \"ramon\",\n \"email\": \"ramon@mail.com\",\n \"password\": \"1234\",\n \"surname\": \"donadeu\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "9a11da2d-7133-4ae5-a394-0f03ad6c9df7",
+            "colId": "bd228706-2ecd-490a-a836-fa9da7a4bf34",
+            "containerId": "2f1f04fd-d7d9-4992-b689-aca3e44c69ca",
+            "name": "GetUser",
+            "url": "v1/user/a8382461-6617-4141-b599-18686c7ce0ad",
+            "method": "GET",
+            "sortNum": 30000,
+            "created": "2024-09-25T20:11:03.414Z",
+            "modified": "2024-09-25T20:12:01.962Z",
+            "headers": []
+        }
+    ],
+    "settings": {
+        "auth": {
+            "type": "bearer",
+            "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYTgzODI0NjEtNjYxNy00MTQxLWI1OTktMTg2ODZjN2NlMGFkIiwiaWF0IjoxNzI3Mjk0MzkzLCJleHAiOjE3MjcyOTUyOTN9.WW2yFtC1f4Fpz4zRvN3-HhLK3TtVT23WajRswdvjOkw"
+        },
+        "options": {
+            "baseUrl": "localhost:3000/api/"
+        }
+    },
+    "ref": "LOJKMijHkFy9f7w3_256sstEJJKeiLtSIHQ-BgxywlYHGHnxU-UDi1k1c6cnpkKoYleoZ_8-itPEfOej5erGlQ"
+}

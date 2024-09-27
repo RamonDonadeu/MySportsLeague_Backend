@@ -1,4 +1,4 @@
-import { findUserById } from "./users.services.js";
+import { findUserById, updateUser } from "./users.services.js";
 
 async function getUserById(req, res) {
     try {
@@ -14,6 +14,23 @@ async function getUserById(req, res) {
     }
 }
 
-export {
-    getUserById
-};
+async function updateUserController(req, res) {
+    try {
+        const user = await findUserById(req.params.id)
+        if (!user) {
+            res.status(404).send('User not found')
+            return
+        }
+        user.name = req.body.name
+        user.surname = req.body.surname
+        user.email = req.body.email
+        await updateUser(user)
+        res.status(200).send(user)
+    }
+    catch (err) {
+        console.error(err)
+    }
+}
+
+export { getUserById, updateUserController };
+

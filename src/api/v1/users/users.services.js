@@ -19,28 +19,32 @@ function findUserByEmail(email) {
     });
 }
 
-async function createPlayerUser(user) {
+async function createUser(user) {
     return prisma.$transaction(async (transaction) => {
         try {
-            // 1.- Create a new user of type PLAYER
             user.password = bcrypt.hashSync(user.password, 12);
-            user = await transaction.user.create({
+            return await transaction.user.create({
                 data: {
                     ...user,
-                    role: "PLAYER"
                 },
             });
-            // 2.- Create a new participant of type USER
-            await transaction.player.create({
-                data: {
-                    user_id: user.user_id
-                }
-            })
-            return user
         }
         catch (error) {
             logger(error)
             throw error
+        }
+    })
+}
+
+async function updateUser(user) {
+    return prisma.user.update({
+        where: {
+            user_id: user.user_id
+        },
+        data: {
+            name: user.name,
+            surname: user.surname,
+            email: user.email
         }
     })
 }
@@ -55,6 +59,6 @@ function findUserById(id) {
 }
 
 export {
-    createPlayerUser, findUserByEmail,
-    findUserById, getUserPassword
+    createUser, findUserByEmail,
+    findUserById, getUserPassword, updateUser
 };

@@ -1,12 +1,15 @@
 import express from 'express';
 import { isAuthenticated } from '../../../middlewares/auth.js';
-import { getUserById } from './users.controller.js';
+import { getUserById, updateUserController } from './users.controller.js';
 
 const router = express.Router()
 
 router.get('/:id', isAuthenticated, async (req, res, next) => {
-    console.log('here')
     getUserById(req, res)
+})
+
+router.put('/:id', isAuthenticated, async (req, res, next) => {
+    updateUserController(req, res)
 })
 
 export default router

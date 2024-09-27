@@ -27,11 +27,24 @@ async function createUser(user) {
                 data: {
                     ...user,
                 },
-            });            
+            });
         }
         catch (error) {
             logger(error)
             throw error
+        }
+    })
+}
+
+async function updateUser(user) {
+    return prisma.user.update({
+        where: {
+            user_id: user.user_id
+        },
+        data: {
+            name: user.name,
+            surname: user.surname,
+            email: user.email
         }
     })
 }
@@ -47,5 +60,5 @@ function findUserById(id) {
 
 export {
     createUser, findUserByEmail,
-    findUserById, getUserPassword
+    findUserById, getUserPassword, updateUser
 };

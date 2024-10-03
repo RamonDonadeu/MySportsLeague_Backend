@@ -21,19 +21,18 @@ model refresh_token {
   updated_at   DateTime @updatedAt
 }
 
-
 model user {
-  user_id       String          @id @default(uuid())
-  email         String          @unique
-  name          String
-  surname       String
-  password      String
-  refreshTokens refresh_token[]
-  created_at    DateTime        @default(now())
-  updated_at    DateTime        @updatedAt
-  team team[]
-  owns_team team[] @relation("team_owner_id")
-  participates_in_league league[] 
+  user_id                String          @id @default(uuid())
+  email                  String          @unique
+  name                   String
+  surname                String
+  password               String
+  refreshTokens          refresh_token[]
+  created_at             DateTime        @default(now())
+  updated_at             DateTime        @updatedAt
+  team                   team[]
+  owns_team              team[]          @relation("team_owner_id")
+  participates_in_league league[]
 }
 
 model user_in_team {
@@ -44,45 +43,44 @@ model user_in_team {
 }
 
 model participant {
-  participant_id String @id @default(uuid())
-  team team[]
-  match_as_local match[] @relation("local")
+  participant_id   String  @id @default(uuid())
+  team             team[]
+  match_as_local   match[] @relation("local")
   match_as_visitor match[] @relation("visitor")
-  match_winner match[] @relation("match_winner")
+  match_winner     match[] @relation("match_winner")
 }
 
 model team {
-  team_id         String        @id@default(uuid())
-  team_name       String
-  players         user[]
-  team_owner      user          @relation("team_owner_id", fields: [team_owner_id], references: [user_id])
-  team_owner_id   String
-  participant     participant   @relation(fields: [participant_id], references: [participant_id])
-  participant_id  String
-
+  team_id        String      @id @default(uuid())
+  team_name      String
+  players        user[]
+  team_owner     user        @relation("team_owner_id", fields: [team_owner_id], references: [user_id])
+  team_owner_id  String
+  participant    participant @relation(fields: [participant_id], references: [participant_id])
+  participant_id String
 }
 
-model user_in_league{
-  user_id String
-  league_id String
-  
+model user_in_league {
+  user_id             String
+  league_id           String
+  is_league_moderator Boolean @default(false)
+
   @@id([user_id, league_id])
 }
 
 model league {
-  league_id String @id @default(uuid())
-  name       String
-  is_team_based         Boolean            @default(false)
+  league_id             String        @id @default(uuid())
+  name                  String
+  is_team_based         Boolean       @default(false)
   matches               match[]
-  status                league_status      @default(NOT_STARTED)
+  status                league_status @default(NOT_STARTED)
   maximum_participants  Int?
-  allow_late_join       Boolean            @default(true)
+  allow_late_join       Boolean       @default(true)
   type                  league_type?
   start_date            DateTime?
   end_date              DateTime?
-  match_can_end_in_draw Boolean            @default(false)
-
-  user user[]
+  match_can_end_in_draw Boolean       @default(false)
+  user                  user[]
 }
 
 enum league_type {
@@ -102,20 +100,18 @@ enum league_status {
 }
 
 model match {
-  match_id String @id @default(uuid())
-  league league[]
-  match_status match_status
-  visitor participant @relation("visitor", fields: [visitor_participant_id], references: [participant_id])
+  match_id               String       @id @default(uuid())
+  league                 league[]
+  match_status           match_status
+  visitor                participant  @relation("visitor", fields: [visitor_participant_id], references: [participant_id])
   visitor_participant_id String
-  local participant @relation("local", fields: [local_participant_id], references: [participant_id])
-  local_participant_id String
-  created_at DateTime @default(now())
-  match_winner participant? @relation("match_winner", fields: [winner_id], references: [participant_id])
-  winner_id String?
-  draw Boolean?
-
+  local                  participant  @relation("local", fields: [local_participant_id], references: [participant_id])
+  local_participant_id   String
+  created_at             DateTime     @default(now())
+  match_winner           participant? @relation("match_winner", fields: [winner_id], references: [participant_id])
+  winner_id              String?
+  draw                   Boolean?
 }
-
 
 enum match_status {
   PENDING

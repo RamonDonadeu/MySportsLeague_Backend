@@ -1,18 +1,26 @@
+import { user } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { v4 } from 'uuid';
-import { hashToken } from '../../../utils/hashToken.js';
-import { generateTokens } from '../../../utils/jwt.js';
-import logger from '../../../utils/logger.js';
-import { createUser, findUserByEmail, findUserById, getUserPassword } from '../users/users.services.js';
-import { addRefreshTokenToWhitelist, deleteRefreshToken, findRefreshTokenById } from './auth.services.js';
+import { hashToken } from '../../../utils/hashToken';
+import { generateTokens } from '../../../utils/jwt';
+import logger from '../../../utils/logger';
+import { createUser, findUserByEmail, findUserById, getUserWithPassword } from '../users/users.services';
+import { addRefreshTokenToWhitelist, deleteRefreshToken, findRefreshTokenById } from './auth.services';
 
+declare module "jsonwebtoken" {
+    export interface JwtPayload {
+        user_id: string;
+    }
+}
 
-const uuidv4 = v4
-async function register(req, res, next) {
+const uuidv4 = v4;
+async function register(req: Request, res: Response, next: NextFunction) {
     try {
-        const { email, password, name, surname } = req.body;
+        const { email, password, name, surname } = req.body as unknown as { email: string, password: string, name: string, surname: string };
         if (!email || !password || !name || !surname) {
+
             res.status(400).send('Missing Fields.');
             return;
         }
@@ -38,7 +46,7 @@ async function register(req, res, next) {
     }
 }
 
-async function login(req, res, next) {
+async function login(req: Request, res: Response, next: NextFunction) {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
@@ -52,7 +60,7 @@ async function login(req, res, next) {
             res.status(404).send('wrongUserOrPassword');
             return
         }
-        const { password: hashedPassword } = await getUserPassword(existingUser.user_id)
+        const { password: hashedPassword } = await getUserWithPassword(existingUser.user_id) as user
 
         const validPassword = await bcrypt.compare(password, hashedPassword);
         if (!validPassword) {
@@ -75,31 +83,46 @@ async function login(req, res, next) {
     }
 }
 
-async function refreshToken(req, res, next) {
+async function refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
         const { refreshToken } = req.body;
         if (!refreshToken) {
             res.status(400).send('refreshTokenMissing');
             return;
         }
-        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-        const savedRefreshToken = await findRefreshTokenById(payload.jti);
+        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET ? process.env.JWT_REFRESH_SECRET : '');
+        const refreshTokenJti = typeof payload !== 'string' && 'jti' in payload ? payload.jti : null;
+
+        if (!refreshTokenJti) {
+            res.sendStatus(401);
+            return;
+        }
+
+        const savedRefreshToken = await findRefreshTokenById(refreshTokenJti);
 
         if (!savedRefreshToken || savedRefreshToken.revoked === true) {
             res.sendStatus(401)
             return
         }
 
+        const userId = typeof payload !== 'string' && 'user_id' in payload ? payload.user_id : null;
+
+        if (!userId) {
+            res.sendStatus(401);
+            return;
+        }
+
         const hashedToken = hashToken(refreshToken);
         if (hashedToken !== savedRefreshToken.hashed_token) {
             res.sendStatus(401);
-            return
+            return;
         }
-        const user = await findUserById(payload.user_id);
+
+        const user = await findUserById(userId as string);
 
         if (!user) {
             res.sendStatus(401);
-            return
+            return;
         }
 
         await deleteRefreshToken(savedRefreshToken.id);

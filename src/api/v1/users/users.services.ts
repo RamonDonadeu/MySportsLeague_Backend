@@ -1,16 +1,18 @@
+import { user } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import logger from '../../../utils/logger.js';
-import prisma from '../../../utils/prisma.js';
+import prisma from '../../../../prisma';
+import logger from '../../../utils/logger';
 
-function getUserPassword(user_id) {
+function getUserWithPassword(user_id: string) {
     return prisma.user.findUnique({
         where: {
             user_id
         }
     })
+
 }
 
-function findUserByEmail(email) {
+function findUserByEmail(email: string) {
     return prisma.user.findUnique({
         where: {
             email,
@@ -19,7 +21,7 @@ function findUserByEmail(email) {
     });
 }
 
-async function createUser(user) {
+async function createUser(user: { email: string, password: string, name: string, surname: string }) {
     return prisma.$transaction(async (transaction) => {
         try {
             user.password = bcrypt.hashSync(user.password, 12);
@@ -36,7 +38,7 @@ async function createUser(user) {
     })
 }
 
-async function updateUser(user) {
+async function updateUser(user: user) {
     return prisma.user.update({
         where: {
             user_id: user.user_id
@@ -49,7 +51,7 @@ async function updateUser(user) {
     })
 }
 
-function findUserById(id) {
+function findUserById(id: string) {
     return prisma.user.findUnique({
         omit: { password: true },
         where: {
@@ -60,5 +62,5 @@ function findUserById(id) {
 
 export {
     createUser, findUserByEmail,
-    findUserById, getUserPassword, updateUser
+    findUserById, getUserWithPassword, updateUser
 };

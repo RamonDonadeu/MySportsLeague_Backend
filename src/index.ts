@@ -1,6 +1,6 @@
 import express from 'express';
-import v1 from './api/v1/index.js';
-import v2 from './api/v2/index.js';
+import v1 from './api/v1/index';
+import v2 from './api/v2/index';
 
 const app = express();
 app.listen(3000, () => {
@@ -10,3 +10,5 @@ app.listen(3000, () => {
 app.use(express.json());
 app.use('/api/v1', v1);
 app.use('/api/v2', v2);
+
+export default app;

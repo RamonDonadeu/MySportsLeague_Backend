@@ -1,6 +1,6 @@
-import { findUserById, updateUser } from "./users.services.js";
+import { findUserById, updateUser } from "./users.services";
 
-async function getUserById(req, res) {
+async function getUserById(req: Request, res: Response) {
     try {
         const user = await findUserById(req.params.id)
         if (!user) {
@@ -14,7 +14,7 @@ async function getUserById(req, res) {
     }
 }
 
-async function updateUserController(req, res) {
+async function updateUserController(req: Request, res: Response) {
     try {
         const user = await findUserById(req.params.id)
         if (!user) {

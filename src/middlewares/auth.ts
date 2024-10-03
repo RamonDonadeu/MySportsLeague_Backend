@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import logger from "../utils/logger.js";
+import logger from "../utils/logger";
 
-function isAuthenticated(req, res, next) {
+function isAuthenticated(req: Request, res: Response, next: NextFunction) {
     const { authorization } = req.headers;
 
     if (!authorization) {
@@ -11,7 +11,7 @@ function isAuthenticated(req, res, next) {
     try {
         const token = authorization.split(' ')[1];
         const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-        req.payload = payload;
+        reqpayload = payload;
         next();
     } catch (err) {
         logger(err);

@@ -61,9 +61,10 @@ model team {
 }
 
 model user_in_league {
-  user_id             String
-  league_id           String
-  is_league_moderator Boolean @default(false)
+  user_id               String
+  league_id             String
+  is_league_moderator   Boolean @default(false)
+  is_league_participant Boolean @default(false)
 
   @@id([user_id, league_id])
 }

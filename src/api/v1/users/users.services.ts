@@ -1,4 +1,3 @@
-import { user } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import prisma from '../../../../prisma';
 import logger from '../../../utils/logger';
@@ -38,7 +37,7 @@ async function createUser(user: { email: string, password: string, name: string,
     })
 }
 
-async function updateUser(user: user) {
+async function updateUser(user: any) {
     return prisma.user.update({
         where: {
             user_id: user.user_id

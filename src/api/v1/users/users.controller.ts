@@ -1,3 +1,4 @@
+import { Request, Response } from 'express';
 import { findUserById, updateUser } from "./users.services";
 
 async function getUserById(req: Request, res: Response) {
